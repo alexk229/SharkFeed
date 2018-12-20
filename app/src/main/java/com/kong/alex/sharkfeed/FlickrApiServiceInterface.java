@@ -10,5 +10,4 @@ public interface FlickrApiServiceInterface {
     @GET
     Observable<List<Shark>> getSharkList();
 
-
 }

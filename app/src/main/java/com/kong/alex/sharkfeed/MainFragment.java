@@ -8,8 +8,18 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import butterknife.BindView;
+import butterknife.ButterKnife;
 
 public class MainFragment extends Fragment {
+
+    @BindView(R.id.rv_sharks)
+    RecyclerView rvSharks;
+
+    private RecyclerView.Adapter sharksAdapter;
 
     static Fragment newInstance() {
 
@@ -23,12 +33,25 @@ public class MainFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_main, container, false);
+        View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+        ButterKnife.bind(this, rootView);
+        return rootView;
+    }
+
+    private void getSharks() {
+        sharksAdapter = new SharksAdapter(getActivity());
+        rvSharks.setAdapter(sharksAdapter);
+    }
+
+    private void bindViews() {
+        rvSharks.setLayoutManager(new GridLayoutManager(getActivity(), 3));
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        bindViews();
+        getSharks();
     }
 
     @Override

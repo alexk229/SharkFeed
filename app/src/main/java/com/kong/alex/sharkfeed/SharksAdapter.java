@@ -17,11 +17,11 @@ import butterknife.ButterKnife;
 
 public class SharksAdapter extends RecyclerView.Adapter<SharksAdapter.SharksHolder> {
 
-    List<Shark> sharkList;
+    List<Photo> sharkList;
     Context context;
 
-    public SharksAdapter(Context context) {
-        //this.sharkList = sharkList;
+    public SharksAdapter(Context context, List<Photo> sharkList) {
+        this.sharkList = sharkList;
         this.context = context;
     }
 
@@ -35,14 +35,15 @@ public class SharksAdapter extends RecyclerView.Adapter<SharksAdapter.SharksHold
 
     @Override
     public void onBindViewHolder(@NonNull SharksHolder holder, int position) {
+        Photo shark = sharkList.get(position);
         Glide.with(context)
-                .load("http://goo.gl/gEgYUd")
+                .load(shark.getUrlT())
                 .into(holder.ivShark);
     }
 
     @Override
     public int getItemCount() {
-        return 9;
+        return sharkList.size();
     }
 
     class SharksHolder extends RecyclerView.ViewHolder {

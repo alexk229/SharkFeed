@@ -5,11 +5,12 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import java.util.ArrayList;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
-import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -18,6 +19,8 @@ public class MainFragment extends Fragment {
 
     @BindView(R.id.rv_sharks)
     RecyclerView rvSharks;
+
+    private MainViewModel viewModel;
 
     private RecyclerView.Adapter sharksAdapter;
 
@@ -39,7 +42,7 @@ public class MainFragment extends Fragment {
     }
 
     private void getSharks() {
-        sharksAdapter = new SharksAdapter(getActivity());
+        sharksAdapter = new SharksAdapter(getActivity(), new ArrayList<>());
         rvSharks.setAdapter(sharksAdapter);
     }
 

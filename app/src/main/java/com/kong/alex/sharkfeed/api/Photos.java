@@ -1,5 +1,4 @@
-
-package com.kong.alex.sharkfeed;
+package com.kong.alex.sharkfeed.api;
 
 import java.util.List;
 import com.google.gson.annotations.Expose;
@@ -21,25 +20,9 @@ public class Photos {
     private String total;
     @SerializedName("photo")
     @Expose
-    private List<Photo> photo = null;
+    private List<Photo> photo;
 
-    /**
-     * No args constructor for use in serialization
-     * 
-     */
-    public Photos() {
-    }
-
-    /**
-     * 
-     * @param total
-     * @param page
-     * @param pages
-     * @param photo
-     * @param perpage
-     */
     public Photos(Integer page, Integer pages, Integer perpage, String total, List<Photo> photo) {
-        super();
         this.page = page;
         this.pages = pages;
         this.perpage = perpage;

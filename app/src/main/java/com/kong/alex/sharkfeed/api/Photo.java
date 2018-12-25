@@ -1,20 +1,36 @@
-
-package com.kong.alex.sharkfeed;
+package com.kong.alex.sharkfeed.api;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
 public class Photo {
-
     @SerializedName("id")
     @Expose
     private String id;
     @SerializedName("owner")
     @Expose
     private String owner;
+    @SerializedName("secret")
+    @Expose
+    private String secret;
+    @SerializedName("server")
+    @Expose
+    private String server;
+    @SerializedName("farm")
+    @Expose
+    private Integer farm;
     @SerializedName("title")
     @Expose
     private String title;
+    @SerializedName("ispublic")
+    @Expose
+    private Integer ispublic;
+    @SerializedName("isfriend")
+    @Expose
+    private Integer isfriend;
+    @SerializedName("isfamily")
+    @Expose
+    private Integer isfamily;
     @SerializedName("url_t")
     @Expose
     private String urlT;
@@ -24,15 +40,15 @@ public class Photo {
     @SerializedName("width_t")
     @Expose
     private String widthT;
-    @SerializedName("url_m")
+    @SerializedName("url_c")
     @Expose
-    private String urlM;
-    @SerializedName("height_m")
+    private String urlC;
+    @SerializedName("height_c")
     @Expose
-    private String heightM;
-    @SerializedName("width_m")
+    private Integer heightC;
+    @SerializedName("width_c")
     @Expose
-    private String widthM;
+    private String widthC;
     @SerializedName("url_l")
     @Expose
     private String urlL;
@@ -52,53 +68,6 @@ public class Photo {
     @Expose
     private String widthO;
 
-    /**
-     * No args constructor for use in serialization
-     * 
-     */
-    public Photo() {
-    }
-
-    /**
-     * 
-     * @param urlO
-     * @param widthL
-     * @param heightL
-     * @param widthM
-     * @param heightM
-     * @param urlT
-     * @param widthT
-     * @param heightT
-     * @param heightO
-     * @param widthO
-     * @param id
-     * @param farm
-     * @param title
-     * @param owner
-     * @param urlM
-     * @param secret
-     * @param urlL
-     * @param server
-     */
-    public Photo(String id, String owner, String secret, String server, Integer farm, String title, Integer ispublic, Integer isfriend, Integer isfamily, String urlT, String heightT, String widthT, String urlM, String heightM, String widthM, String urlL, String heightL, String widthL, String urlO, String heightO, String widthO) {
-        super();
-        this.id = id;
-        this.owner = owner;
-        this.title = title;
-        this.urlT = urlT;
-        this.heightT = heightT;
-        this.widthT = widthT;
-        this.urlM = urlM;
-        this.heightM = heightM;
-        this.widthM = widthM;
-        this.urlL = urlL;
-        this.heightL = heightL;
-        this.widthL = widthL;
-        this.urlO = urlO;
-        this.heightO = heightO;
-        this.widthO = widthO;
-    }
-
     public String getId() {
         return id;
     }
@@ -115,12 +84,60 @@ public class Photo {
         this.owner = owner;
     }
 
+    public String getSecret() {
+        return secret;
+    }
+
+    public void setSecret(String secret) {
+        this.secret = secret;
+    }
+
+    public String getServer() {
+        return server;
+    }
+
+    public void setServer(String server) {
+        this.server = server;
+    }
+
+    public Integer getFarm() {
+        return farm;
+    }
+
+    public void setFarm(Integer farm) {
+        this.farm = farm;
+    }
+
     public String getTitle() {
         return title;
     }
 
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    public Integer getIspublic() {
+        return ispublic;
+    }
+
+    public void setIspublic(Integer ispublic) {
+        this.ispublic = ispublic;
+    }
+
+    public Integer getIsfriend() {
+        return isfriend;
+    }
+
+    public void setIsfriend(Integer isfriend) {
+        this.isfriend = isfriend;
+    }
+
+    public Integer getIsfamily() {
+        return isfamily;
+    }
+
+    public void setIsfamily(Integer isfamily) {
+        this.isfamily = isfamily;
     }
 
     public String getUrlT() {
@@ -147,28 +164,28 @@ public class Photo {
         this.widthT = widthT;
     }
 
-    public String getUrlM() {
-        return urlM;
+    public String getUrlC() {
+        return urlC;
     }
 
-    public void setUrlM(String urlM) {
-        this.urlM = urlM;
+    public void setUrlC(String urlC) {
+        this.urlC = urlC;
     }
 
-    public String getHeightM() {
-        return heightM;
+    public Integer getHeightC() {
+        return heightC;
     }
 
-    public void setHeightM(String heightM) {
-        this.heightM = heightM;
+    public void setHeightC(Integer heightC) {
+        this.heightC = heightC;
     }
 
-    public String getWidthM() {
-        return widthM;
+    public String getWidthC() {
+        return widthC;
     }
 
-    public void setWidthM(String widthM) {
-        this.widthM = widthM;
+    public void setWidthC(String widthC) {
+        this.widthC = widthC;
     }
 
     public String getUrlL() {

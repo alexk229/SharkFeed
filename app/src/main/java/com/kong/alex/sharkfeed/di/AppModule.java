@@ -5,11 +5,14 @@ import android.content.Context;
 
 import com.kong.alex.sharkfeed.Constants;
 import com.kong.alex.sharkfeed.api.FlickrApiService;
+import com.kong.alex.sharkfeed.repository.PhotosDataSource;
+import com.kong.alex.sharkfeed.repository.PhotosDataSourceFactory;
 
 import javax.inject.Singleton;
 
 import dagger.Module;
 import dagger.Provides;
+import io.reactivex.disposables.CompositeDisposable;
 import okhttp3.OkHttpClient;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;

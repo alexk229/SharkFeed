@@ -6,6 +6,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.kong.alex.sharkfeed.api.Photo;
+import com.kong.alex.sharkfeed.api.Photos;
 import com.kong.alex.sharkfeed.di.Injectable;
 import com.kong.alex.sharkfeed.R;
 
@@ -35,7 +36,6 @@ public class MainFragment extends Fragment implements Injectable {
 
     private SharksAdapter sharksAdapter;
     private SharkListViewModel sharkListViewModel;
-    private List<Photo> photoList;
 
     @Nullable
     @Override
@@ -47,15 +47,14 @@ public class MainFragment extends Fragment implements Injectable {
 
     private void bindViews() {
         rvSharks.setLayoutManager(new GridLayoutManager(getActivity(), 3));
+        sharksAdapter = new SharksAdapter();
+        rvSharks.setAdapter(sharksAdapter);
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         bindViews();
-        photoList = new ArrayList<>();
-        sharksAdapter = new SharksAdapter(getActivity(), photoList);
-        rvSharks.setAdapter(sharksAdapter);
     }
 
     @Override
@@ -63,19 +62,12 @@ public class MainFragment extends Fragment implements Injectable {
         super.onActivityCreated(savedInstanceState);
         sharkListViewModel = ViewModelProviders.of(this, viewModelFactory)
                 .get(SharkListViewModel.class);
-        sharkListViewModel.getPhotos();
         subscribe();
     }
 
     private void subscribe() {
-        sharkListViewModel.getPhotosResponse().observe(this, photoResponses -> {
-            photoList = photoResponses;
-            sharksAdapter.getSharkList().clear();
-            if(photoResponses != null) {
-                sharksAdapter.getSharkList().addAll(photoResponses);
-            }
-            sharksAdapter.notifyDataSetChanged();
-        });
+        sharkListViewModel.getPhotosResponse().observe(this, sharksAdapter::submitList);
+        sharkListViewModel.getNetworkState().observe(this, sharksAdapter::setNetworkState);
     }
 
     @Override

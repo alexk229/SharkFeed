@@ -1,66 +1,52 @@
 package com.kong.alex.sharkfeed.ui;
 
+import com.kong.alex.NetworkState;
 import com.kong.alex.sharkfeed.api.Photo;
-import com.kong.alex.sharkfeed.api.Photos;
-import com.kong.alex.sharkfeed.api.PhotosResult;
-import com.kong.alex.sharkfeed.repository.PhotosRepository;
-
-import java.util.List;
+import com.kong.alex.sharkfeed.repository.PhotosDataSource;
+import com.kong.alex.sharkfeed.repository.PhotosDataSourceFactory;
 
 import javax.inject.Inject;
 
 import androidx.lifecycle.LiveData;
-import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
-import io.reactivex.disposables.CompositeDisposable;
-import io.reactivex.observers.DisposableObserver;
-import timber.log.Timber;
+import androidx.paging.LivePagedListBuilder;
+import androidx.paging.PagedList;
 
 public class SharkListViewModel extends ViewModel {
 
-    private MutableLiveData<List<Photo>> sharkList;
-    private CompositeDisposable disposable;
-    private PhotosRepository photosRepository;
+    private final PhotosDataSourceFactory photosDataSourceFactory;
+    private LiveData<PagedList<Photo>> sharkList;
 
     @Inject
-    public SharkListViewModel(PhotosRepository photosRepository) {
-        this.photosRepository = photosRepository;
-        sharkList = new MutableLiveData<>();
-        disposable = new CompositeDisposable();
+    public SharkListViewModel(PhotosDataSourceFactory photosDataSourceFactory) {
+        this.photosDataSourceFactory = photosDataSourceFactory;
+        createPagedList();
     }
 
-    public void getPhotos() {
-        disposable.add(photosRepository.getObserverable().subscribeWith(getObserver()));
+    private void createPagedList() {
+        PagedList.Config config = new PagedList.Config.Builder()
+                .setPageSize(100)
+                .setInitialLoadSizeHint(200)
+                .setEnablePlaceholders(false)
+                .build();
+        sharkList = new LivePagedListBuilder<>(photosDataSourceFactory, config).build();
     }
 
-    public LiveData<List<Photo>> getPhotosResponse() {
+    public LiveData<NetworkState> getNetworkState() {
+        return photosDataSourceFactory.getPhotosDataSource().getNetworkState();
+    }
+
+    public LiveData<NetworkState> getRefreshState() {
+        return photosDataSourceFactory.getPhotosDataSource().getInitialLoadingState();
+    }
+
+    public LiveData<PagedList<Photo>> getPhotosResponse() {
         return sharkList;
-    }
-
-    private DisposableObserver<PhotosResult> getObserver() {
-        return new DisposableObserver<PhotosResult>() {
-            @Override
-            public void onNext(PhotosResult photosResultResponse) {
-                Timber.d("onNext: %s", photosResultResponse.getPhotos().getTotal());
-                sharkList.setValue(photosResultResponse.getPhotos().getPhoto());
-            }
-
-            @Override
-            public void onError(Throwable e) {
-                Timber.e("Error: %s", e.getMessage());
-                e.printStackTrace();
-            }
-
-            @Override
-            public void onComplete() {
-                Timber.d("Completed");
-            }
-        };
     }
 
     @Override
     protected void onCleared() {
         super.onCleared();
-        disposable.clear();
+        photosDataSourceFactory.getPhotosDataSource().clear();
     }
 }

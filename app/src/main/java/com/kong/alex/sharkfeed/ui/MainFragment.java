@@ -1,5 +1,6 @@
 package com.kong.alex.sharkfeed.ui;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -46,8 +47,22 @@ public class MainFragment extends Fragment implements Injectable {
     }
 
     private void bindViews() {
-        rvSharks.setLayoutManager(new GridLayoutManager(getActivity(), 3));
         sharksAdapter = new SharksAdapter();
+        GridLayoutManager gridLayoutManager = new GridLayoutManager(getActivity(), 3);
+        gridLayoutManager.setSpanSizeLookup(new GridLayoutManager.SpanSizeLookup() {
+            @Override
+            public int getSpanSize(int position) {
+                switch (sharksAdapter.getItemViewType(position)) {
+                    case R.layout.item_network_state:
+                        return 3;
+                    case R.layout.item_shark:
+                        return 1;
+                    default:
+                        return 0;
+                }
+            }
+        });
+        rvSharks.setLayoutManager(gridLayoutManager);
         rvSharks.setAdapter(sharksAdapter);
     }
 

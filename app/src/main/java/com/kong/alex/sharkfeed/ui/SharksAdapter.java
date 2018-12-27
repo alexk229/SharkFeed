@@ -1,30 +1,20 @@
 package com.kong.alex.sharkfeed.ui;
 
-import android.content.Context;
-import android.view.LayoutInflater;
-import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 
-import com.bumptech.glide.Glide;
-import com.kong.alex.NetworkState;
+import com.kong.alex.sharkfeed.NetworkState;
 import com.kong.alex.sharkfeed.R;
 import com.kong.alex.sharkfeed.api.Photo;
 
 import java.util.List;
 
 import androidx.annotation.NonNull;
-import androidx.paging.PagedList;
 import androidx.paging.PagedListAdapter;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
-import butterknife.BindView;
-import butterknife.ButterKnife;
+import timber.log.Timber;
 
 public class SharksAdapter extends PagedListAdapter<Photo, RecyclerView.ViewHolder> {
-
-    private static final int TYPE_PROGRESS = 0;
-    private static final int TYPE_ITEM = 1;
 
     private NetworkState networkState;
 
@@ -35,10 +25,14 @@ public class SharksAdapter extends PagedListAdapter<Photo, RecyclerView.ViewHold
     @NonNull
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        if(viewType == TYPE_PROGRESS) {
-            return NetworkStateViewHolder.create(parent);
-        } else {
-            return SharkViewHolder.create(parent);
+        Timber.d("ViewType: %s", viewType);
+        switch (viewType) {
+            case R.layout.item_shark:
+                return SharkViewHolder.create(parent);
+            case R.layout.item_network_state:
+                return NetworkStateViewHolder.create(parent);
+            default:
+                throw new IllegalArgumentException("unknown view type $viewType");
         }
     }
 
@@ -51,6 +45,15 @@ public class SharksAdapter extends PagedListAdapter<Photo, RecyclerView.ViewHold
             case R.layout.item_network_state:
                 ((NetworkStateViewHolder) holder).bindTo(networkState);
                 break;
+        }
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position, @NonNull List<Object> payloads) {
+        if(!payloads.isEmpty()) {
+            ((SharkViewHolder) holder).updatePhoto(getItem(position));
+        } else {
+            onBindViewHolder(holder, position);
         }
     }
 
@@ -97,7 +100,7 @@ public class SharksAdapter extends PagedListAdapter<Photo, RecyclerView.ViewHold
                 // The ID property identifies when items are the same.
                 @Override
                 public boolean areItemsTheSame(Photo oldItem, Photo newItem) {
-                    return oldItem.getId() == newItem.getId();
+                    return oldItem.getId().equals(newItem.getId());
                 }
 
                 // Use Object.equals() to know when an item's content changes.

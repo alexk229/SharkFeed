@@ -6,7 +6,7 @@ import android.view.ViewGroup;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import com.kong.alex.NetworkState;
+import com.kong.alex.sharkfeed.NetworkState;
 import com.kong.alex.sharkfeed.R;
 
 import androidx.annotation.NonNull;
@@ -17,13 +17,13 @@ import butterknife.ButterKnife;
 
 public class NetworkStateViewHolder extends RecyclerView.ViewHolder {
 
-    @BindView(R.id.tv_error)
+    @BindView(R.id.tv_error_msg)
     TextView tvError;
 
     @BindView(R.id.button_retry)
     AppCompatButton buttonRetry;
 
-    @BindView(R.id.pb_loading)
+    @BindView(R.id.progress_bar_network)
     ProgressBar pbLoading;
 
     public NetworkStateViewHolder(@NonNull View itemView) {

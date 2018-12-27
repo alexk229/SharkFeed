@@ -1,6 +1,6 @@
 package com.kong.alex.sharkfeed.repository;
 
-import com.kong.alex.NetworkState;
+import com.kong.alex.sharkfeed.NetworkState;
 import com.kong.alex.sharkfeed.api.FlickrApiService;
 import com.kong.alex.sharkfeed.api.Photo;
 import com.kong.alex.sharkfeed.api.PhotosResult;
@@ -59,7 +59,14 @@ public class PhotosDataSource extends ItemKeyedDataSource<Integer, Photo> {
                 .observeOn(AndroidSchedulers.mainThread());
     }
 
-    private DisposableObserver<PhotosResult> getObserver(@NonNull LoadInitialCallback callback) {
+    @Override
+    public void loadInitial(@NonNull LoadInitialParams<Integer> params, @NonNull LoadInitialCallback<Photo> callback) {
+        initialLoadingState.postValue(NetworkState.LOADING);
+        networkState.postValue(NetworkState.LOADING);
+        disposable.add(getObserverable(params.requestedLoadSize, 1).subscribeWith(getLoadInitialObserver(callback)));
+    }
+
+    private DisposableObserver<PhotosResult> getLoadInitialObserver(@NonNull LoadInitialCallback<Photo> callback) {
         return new DisposableObserver<PhotosResult>() {
             @Override
             public void onNext(PhotosResult photosResult) {
@@ -78,7 +85,7 @@ public class PhotosDataSource extends ItemKeyedDataSource<Integer, Photo> {
         };
     }
 
-    private void onLoadInitialFetched(PhotosResult photosResult, LoadInitialCallback callback) {
+    private void onLoadInitialFetched(PhotosResult photosResult, LoadInitialCallback<Photo> callback) {
         initialLoadingState.postValue(NetworkState.LOADED);
         networkState.postValue(NetworkState.LOADED);
         pageNumber++;
@@ -91,7 +98,15 @@ public class PhotosDataSource extends ItemKeyedDataSource<Integer, Photo> {
         networkState.postValue(new NetworkState(NetworkState.Status.FAILED, e.getLocalizedMessage()));
     }
 
-    private DisposableObserver<PhotosResult> getObserver(LoadParams<Integer> params, @NonNull LoadCallback callback) {
+    @Override
+    public void loadAfter(@NonNull LoadParams<Integer> params, @NonNull LoadCallback<Photo> callback) {
+        networkState.postValue(NetworkState.LOADING);
+        Timber.d("NextKey: %s", params.key);
+        Timber.d("RequestLoadSize: %s", params.requestedLoadSize);
+        disposable.add(getObserverable(params.requestedLoadSize, params.key).subscribeWith(getLoadAfterObserver(params, callback)));
+    }
+
+    private DisposableObserver<PhotosResult> getLoadAfterObserver(LoadParams<Integer> params, @NonNull LoadCallback<Photo> callback) {
         return new DisposableObserver<PhotosResult>() {
             @Override
             public void onNext(PhotosResult photosResult) {
@@ -110,7 +125,8 @@ public class PhotosDataSource extends ItemKeyedDataSource<Integer, Photo> {
         };
     }
 
-    private void onLoadAfterFetched(PhotosResult photosResult, LoadParams<Integer> params, LoadCallback callback) {
+
+    private void onLoadAfterFetched(PhotosResult photosResult, LoadParams<Integer> params, LoadCallback<Photo> callback) {
         networkState.postValue(NetworkState.LOADED);
         pageNumber++;
         callback.onResult(photosResult.getPhotos().getPhoto());
@@ -119,26 +135,6 @@ public class PhotosDataSource extends ItemKeyedDataSource<Integer, Photo> {
     private void onLoadAfterError(Throwable e) {
         Timber.e(e);
         networkState.postValue(new NetworkState(NetworkState.Status.FAILED, e.getLocalizedMessage()));
-    }
-
-    public void clear() {
-        pageNumber = 1;
-        disposable.clear();
-    }
-
-    @Override
-    public void loadInitial(@NonNull LoadInitialParams<Integer> params, @NonNull LoadInitialCallback<Photo> callback) {
-        initialLoadingState.postValue(NetworkState.LOADING);
-        networkState.postValue(NetworkState.LOADING);
-        disposable.add(getObserverable(params.requestedLoadSize, 1).subscribeWith(getObserver(callback)));
-    }
-
-    @Override
-    public void loadAfter(@NonNull LoadParams<Integer> params, @NonNull LoadCallback<Photo> callback) {
-        networkState.postValue(NetworkState.LOADING);
-        Timber.d("NextKey: %s", params.key);
-        Timber.d("RequestLoadSize: %s", params.requestedLoadSize);
-        disposable.add(getObserverable(params.requestedLoadSize, params.key).subscribeWith(getObserver(params, callback)));
     }
 
     @Override
@@ -150,5 +146,10 @@ public class PhotosDataSource extends ItemKeyedDataSource<Integer, Photo> {
     @Override
     public Integer getKey(@NonNull Photo item) {
         return pageNumber;
+    }
+
+    public void clear() {
+        pageNumber = 1;
+        disposable.clear();
     }
 }

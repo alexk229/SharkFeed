@@ -1,8 +1,7 @@
 package com.kong.alex.sharkfeed.ui;
 
-import com.kong.alex.NetworkState;
+import com.kong.alex.sharkfeed.NetworkState;
 import com.kong.alex.sharkfeed.api.Photo;
-import com.kong.alex.sharkfeed.repository.PhotosDataSource;
 import com.kong.alex.sharkfeed.repository.PhotosDataSourceFactory;
 
 import javax.inject.Inject;

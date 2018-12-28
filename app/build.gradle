@@ -53,4 +53,5 @@ dependencies {
 
     implementation 'android.arch.lifecycle:extensions:1.1.1'
     implementation 'android.arch.paging:runtime:1.0.1'
+    implementation 'in.srain.cube:ultra-ptr:1.0.11'
 }

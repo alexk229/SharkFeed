@@ -25,12 +25,19 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import in.srain.cube.views.ptr.PtrClassicFrameLayout;
+import in.srain.cube.views.ptr.PtrDefaultHandler;
+import in.srain.cube.views.ptr.PtrFrameLayout;
+import in.srain.cube.views.ptr.PtrHandler;
 import timber.log.Timber;
 
 public class MainFragment extends Fragment implements Injectable {
 
     @BindView(R.id.rv_sharks)
     RecyclerView rvSharks;
+
+    @BindView(R.id.swipe_refresh_sharks)
+    PtrFrameLayout mPtrFrame;
 
     @Inject
     ViewModelProvider.Factory viewModelFactory;
@@ -64,6 +71,18 @@ public class MainFragment extends Fragment implements Injectable {
         });
         rvSharks.setLayoutManager(gridLayoutManager);
         rvSharks.setAdapter(sharksAdapter);
+
+        mPtrFrame.setPtrHandler(new PtrHandler() {
+            @Override
+            public void onRefreshBegin(PtrFrameLayout frame) {
+                frame.postDelayed(() -> mPtrFrame.refreshComplete(), 1800);
+            }
+
+            @Override
+            public boolean checkCanDoRefresh(PtrFrameLayout frame, View content, View header) {
+                return PtrDefaultHandler.checkContentCanBePulledDown(frame, content, header);
+            }
+        });
     }
 
     @Override

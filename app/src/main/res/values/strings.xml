@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">SharkFeed</string>
     <string name="retry">Retry</string>
+    <string name="pull_to_refresh_sharks">Pull to refresh sharks</string>
 </resources>

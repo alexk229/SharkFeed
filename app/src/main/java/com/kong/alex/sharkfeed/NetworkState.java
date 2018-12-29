@@ -8,16 +8,19 @@ public class NetworkState {
         FAILED
     }
 
-
     private final Status status;
     private final String msg;
 
     public static final NetworkState LOADED;
     public static final NetworkState LOADING;
 
-    public NetworkState(Status status, String msg) {
+    private NetworkState(Status status, String msg) {
         this.status = status;
         this.msg = msg;
+    }
+
+    public static NetworkState error(String msg) {
+        return new NetworkState(Status.FAILED, msg);
     }
 
     static {

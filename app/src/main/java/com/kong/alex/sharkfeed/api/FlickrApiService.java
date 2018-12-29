@@ -1,14 +1,13 @@
 package com.kong.alex.sharkfeed.api;
 
-import io.reactivex.Observable;
-import retrofit2.Call;
+import io.reactivex.Single;
 import retrofit2.http.GET;
 import retrofit2.http.Query;
 
 public interface FlickrApiService {
 
     @GET("rest/")
-    Observable<PhotosResult> getSharkList(
+    Single<PhotosResult> getSharkPhotos(
             @Query("method") String method,
             @Query("api_key") String apiKey,
             @Query("text") String text,
@@ -19,7 +18,7 @@ public interface FlickrApiService {
             @Query("nojsoncallback") Integer noJsonCallback);
 
 //    @GET("rest/")
-//    Call<PhotosResult> getSharkList(
+//    Call<PhotosResult> getSharkPhotos(
 //            @Query("method") String method,
 //            @Query("api_key") String api_key,
 //            @Query("text") String text,

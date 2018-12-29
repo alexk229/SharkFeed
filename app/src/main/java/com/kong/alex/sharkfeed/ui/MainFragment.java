@@ -1,18 +1,13 @@
 package com.kong.alex.sharkfeed.ui;
 
-import android.content.Context;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.kong.alex.sharkfeed.api.Photo;
-import com.kong.alex.sharkfeed.api.Photos;
+import com.kong.alex.sharkfeed.NetworkState;
 import com.kong.alex.sharkfeed.di.Injectable;
 import com.kong.alex.sharkfeed.R;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import javax.inject.Inject;
 
@@ -25,13 +20,12 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import butterknife.BindView;
 import butterknife.ButterKnife;
-import in.srain.cube.views.ptr.PtrClassicFrameLayout;
 import in.srain.cube.views.ptr.PtrDefaultHandler;
 import in.srain.cube.views.ptr.PtrFrameLayout;
 import in.srain.cube.views.ptr.PtrHandler;
 import timber.log.Timber;
 
-public class MainFragment extends Fragment implements Injectable {
+public class MainFragment extends Fragment implements Injectable, RetryCallback {
 
     @BindView(R.id.rv_sharks)
     RecyclerView rvSharks;
@@ -53,8 +47,30 @@ public class MainFragment extends Fragment implements Injectable {
         return rootView;
     }
 
-    private void bindViews() {
-        sharksAdapter = new SharksAdapter();
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+    }
+
+    @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        sharkListViewModel = ViewModelProviders.of(this, viewModelFactory)
+                .get(SharkListViewModel.class);
+        initAdapter();
+        initSwipeRefresh();
+    }
+
+    private void initAdapter() {
+        sharksAdapter = new SharksAdapter(this);
+        sharksAdapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
+            @Override
+            public void onItemRangeInserted(int positionStart, int itemCount) {
+                if(positionStart == 0) {
+                    rvSharks.scrollToPosition(0);
+                }
+            }
+        });
         GridLayoutManager gridLayoutManager = new GridLayoutManager(getActivity(), 3);
         gridLayoutManager.setSpanSizeLookup(new GridLayoutManager.SpanSizeLookup() {
             @Override
@@ -72,10 +88,15 @@ public class MainFragment extends Fragment implements Injectable {
         rvSharks.setLayoutManager(gridLayoutManager);
         rvSharks.setAdapter(sharksAdapter);
 
+        sharkListViewModel.getPhotosResponse().observe(this, sharksAdapter::submitList);
+        sharkListViewModel.getNetworkState().observe(this, sharksAdapter::setNetworkState);
+    }
+
+    private void initSwipeRefresh() {
         mPtrFrame.setPtrHandler(new PtrHandler() {
             @Override
             public void onRefreshBegin(PtrFrameLayout frame) {
-                frame.postDelayed(() -> mPtrFrame.refreshComplete(), 1800);
+                sharkListViewModel.refresh();
             }
 
             @Override
@@ -83,25 +104,20 @@ public class MainFragment extends Fragment implements Injectable {
                 return PtrDefaultHandler.checkContentCanBePulledDown(frame, content, header);
             }
         });
+
+        sharkListViewModel.getRefreshState().observe(this, this::setRefreshState);
+    }
+
+    private void setRefreshState(NetworkState networkState) {
+        Timber.d("NetworkState: %s", networkState.getStatus());
+        if(networkState == NetworkState.LOADED || networkState.getStatus() == NetworkState.Status.FAILED) {
+            mPtrFrame.refreshComplete();
+        }
     }
 
     @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-        bindViews();
-    }
-
-    @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        sharkListViewModel = ViewModelProviders.of(this, viewModelFactory)
-                .get(SharkListViewModel.class);
-        subscribe();
-    }
-
-    private void subscribe() {
-        sharkListViewModel.getPhotosResponse().observe(this, sharksAdapter::submitList);
-        sharkListViewModel.getNetworkState().observe(this, sharksAdapter::setNetworkState);
+    public void retry() {
+        sharkListViewModel.retry();
     }
 
     @Override

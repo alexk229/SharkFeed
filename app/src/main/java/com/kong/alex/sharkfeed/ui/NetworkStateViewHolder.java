@@ -24,28 +24,38 @@ public class NetworkStateViewHolder extends RecyclerView.ViewHolder {
     AppCompatButton buttonRetry;
 
     @BindView(R.id.progress_bar_network)
-    ProgressBar pbLoading;
+    ProgressBar progressBarNetwork;
 
-    public NetworkStateViewHolder(@NonNull View itemView) {
+    private final RetryCallback callback;
+
+    public NetworkStateViewHolder(@NonNull View itemView, RetryCallback callback) {
         super(itemView);
+        this.callback = callback;
         ButterKnife.bind(this, itemView);
+        bindListeners();
+    }
+
+    public void bindListeners() {
+        buttonRetry.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                callback.retry();
+            }
+        });
     }
 
     public void bindTo(NetworkState networkState) {
-        //error message
+        progressBarNetwork.setVisibility(networkState.getStatus() == NetworkState.Status.RUNNING ? View.VISIBLE : View.GONE);
+        buttonRetry.setVisibility(networkState.getStatus() == NetworkState.Status.FAILED ? View.VISIBLE : View.GONE);
         tvError.setVisibility(networkState.getMsg() != null ? View.VISIBLE : View.GONE);
         if (networkState.getMsg() != null) {
             tvError.setText(networkState.getMsg());
         }
-
-        //loading and retry
-        buttonRetry.setVisibility(networkState.getStatus() == NetworkState.Status.FAILED ? View.VISIBLE : View.GONE);
-        pbLoading.setVisibility(networkState.getStatus() == NetworkState.Status.RUNNING ? View.VISIBLE : View.GONE);
     }
 
-    public static NetworkStateViewHolder create(ViewGroup parent) {
+    public static NetworkStateViewHolder create(ViewGroup parent, RetryCallback callback) {
         LayoutInflater layoutInflater = LayoutInflater.from(parent.getContext());
         View view = layoutInflater.inflate(R.layout.item_network_state, parent, false);
-        return new NetworkStateViewHolder(view);
+        return new NetworkStateViewHolder(view, callback);
     }
 }

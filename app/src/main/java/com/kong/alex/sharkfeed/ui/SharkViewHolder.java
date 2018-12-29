@@ -19,15 +19,12 @@ public class SharkViewHolder extends RecyclerView.ViewHolder {
     @BindView(R.id.iv_shark)
     ImageView ivShark;
 
-    private Photo photo;
-
     SharkViewHolder(@NonNull View itemView) {
         super(itemView);
         ButterKnife.bind(this, itemView);
     }
 
     public void bindTo(Photo photo) {
-        this.photo = photo;
         Glide.with(itemView.getContext())
                 .load(photo.getUrlT())
                 .into(ivShark);
@@ -37,9 +34,5 @@ public class SharkViewHolder extends RecyclerView.ViewHolder {
         LayoutInflater layoutInflater = LayoutInflater.from(parent.getContext());
         View view = layoutInflater.inflate(R.layout.item_shark, parent, false);
         return new SharkViewHolder(view);
-    }
-
-    public void updatePhoto(Photo photo) {
-        this.photo = photo;
     }
 }

@@ -6,8 +6,6 @@ import com.kong.alex.sharkfeed.NetworkState;
 import com.kong.alex.sharkfeed.R;
 import com.kong.alex.sharkfeed.api.Photo;
 
-import java.util.List;
-
 import androidx.annotation.NonNull;
 import androidx.paging.PagedListAdapter;
 import androidx.recyclerview.widget.DiffUtil;
@@ -16,21 +14,37 @@ import timber.log.Timber;
 
 public class SharksAdapter extends PagedListAdapter<Photo, RecyclerView.ViewHolder> {
 
-    private NetworkState networkState;
+    private NetworkState currentNetworkState;
+    private final RetryCallback callback;
 
-    public SharksAdapter() {
+    private static DiffUtil.ItemCallback<Photo> DIFF_CALLBACK =
+            new DiffUtil.ItemCallback<Photo>() {
+                // The ID property identifies when items are the same.
+                @Override
+                public boolean areItemsTheSame(Photo oldItem, Photo newItem) {
+                    return oldItem.getId().equals(newItem.getId());
+                }
+
+                @Override
+                public boolean areContentsTheSame(Photo oldItem, Photo newItem) {
+                    return oldItem.equals(newItem);
+                }
+            };
+
+    public SharksAdapter(RetryCallback callback) {
         super(DIFF_CALLBACK);
+        this.callback = callback;
     }
 
     @NonNull
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        Timber.d("ViewType: %s", viewType);
         switch (viewType) {
             case R.layout.item_shark:
                 return SharkViewHolder.create(parent);
             case R.layout.item_network_state:
-                return NetworkStateViewHolder.create(parent);
+                Timber.d("NetworkState created");
+                return NetworkStateViewHolder.create(parent, callback);
             default:
                 throw new IllegalArgumentException("unknown view type $viewType");
         }
@@ -43,22 +57,13 @@ public class SharksAdapter extends PagedListAdapter<Photo, RecyclerView.ViewHold
                 ((SharkViewHolder) holder).bindTo(getItem(position));
                 break;
             case R.layout.item_network_state:
-                ((NetworkStateViewHolder) holder).bindTo(networkState);
+                ((NetworkStateViewHolder) holder).bindTo(currentNetworkState);
                 break;
         }
     }
 
-    @Override
-    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position, @NonNull List<Object> payloads) {
-        if(!payloads.isEmpty()) {
-            ((SharkViewHolder) holder).updatePhoto(getItem(position));
-        } else {
-            onBindViewHolder(holder, position);
-        }
-    }
-
     private boolean hasExtraRow() {
-        return networkState != null && networkState != NetworkState.LOADED;
+        return currentNetworkState != null && currentNetworkState != NetworkState.LOADED;
     }
 
     @Override
@@ -71,22 +76,18 @@ public class SharksAdapter extends PagedListAdapter<Photo, RecyclerView.ViewHold
     }
 
     public void setNetworkState(NetworkState newNetworkState) {
-        if (getCurrentList() != null) {
-            if (getCurrentList().size() != 0) {
-                NetworkState previousState = this.networkState;
-                boolean hadExtraRow = hasExtraRow();
-                this.networkState = newNetworkState;
-                boolean hasExtraRow = hasExtraRow();
-                if (hadExtraRow != hasExtraRow) {
-                    if (hadExtraRow) {
-                        notifyItemRemoved(super.getItemCount());
-                    } else {
-                        notifyItemInserted(super.getItemCount());
-                    }
-                } else if (hasExtraRow && previousState != newNetworkState) {
-                    notifyItemChanged(getItemCount() - 1);
-                }
+        NetworkState previousNetworkState = this.currentNetworkState;
+        boolean hadExtraRow = hasExtraRow();
+        this.currentNetworkState = newNetworkState;
+        boolean hasExtraRow = hasExtraRow();
+        if (hadExtraRow != hasExtraRow) {
+            if (hadExtraRow) {
+                notifyItemRemoved(super.getItemCount());
+            } else {
+                notifyItemInserted(super.getItemCount());
             }
+        } else if (hasExtraRow && !previousNetworkState.equals(newNetworkState)) {
+            notifyItemChanged(getItemCount() - 1);
         }
     }
 
@@ -94,21 +95,5 @@ public class SharksAdapter extends PagedListAdapter<Photo, RecyclerView.ViewHold
     public int getItemCount() {
         return super.getItemCount() + (hasExtraRow() ? 1 : 0);
     }
-
-    private static DiffUtil.ItemCallback<Photo> DIFF_CALLBACK =
-            new DiffUtil.ItemCallback<Photo>() {
-                // The ID property identifies when items are the same.
-                @Override
-                public boolean areItemsTheSame(Photo oldItem, Photo newItem) {
-                    return oldItem.getId().equals(newItem.getId());
-                }
-
-                // Use Object.equals() to know when an item's content changes.
-                // Implement equals(), or write custom data comparison logic here.
-                @Override
-                public boolean areContentsTheSame(Photo oldItem, Photo newItem) {
-                    return oldItem.equals(newItem);
-                }
-            };
 
 }

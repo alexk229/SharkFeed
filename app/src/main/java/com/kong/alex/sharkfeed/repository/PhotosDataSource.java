@@ -1,7 +1,6 @@
 package com.kong.alex.sharkfeed.repository;
 
 import com.kong.alex.sharkfeed.NetworkState;
-import com.kong.alex.sharkfeed.api.FlickrApiService;
 import com.kong.alex.sharkfeed.api.Photo;
 import com.kong.alex.sharkfeed.api.PhotosResult;
 
@@ -12,28 +11,29 @@ import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.paging.ItemKeyedDataSource;
-import io.reactivex.Observable;
-import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
-import io.reactivex.observers.DisposableObserver;
-import io.reactivex.schedulers.Schedulers;
+import io.reactivex.disposables.Disposable;
 import timber.log.Timber;
 
 @Singleton
 public class PhotosDataSource extends ItemKeyedDataSource<Integer, Photo> {
 
-    private final FlickrApiService flickrApiService;
+    private final PhotosRepository photosRepository;
     private final CompositeDisposable disposable;
     private int pageNumber = 1;
     private MutableLiveData<NetworkState> networkState;
     private MutableLiveData<NetworkState> initialLoadingState;
 
+    private LoadParams<Integer> loadAfterParams;
+    private LoadCallback<Photo> loadAfterCallback;
+
     @Inject
-    public PhotosDataSource(FlickrApiService flickrApiService) {
-        this.flickrApiService = flickrApiService;
+    public PhotosDataSource(PhotosRepository photosRepository) {
+        this.photosRepository = photosRepository;
         disposable = new CompositeDisposable();
 
         networkState = new MutableLiveData<>();
+
         initialLoadingState = new MutableLiveData<>();
     }
 
@@ -45,44 +45,13 @@ public class PhotosDataSource extends ItemKeyedDataSource<Integer, Photo> {
         return initialLoadingState;
     }
 
-    private Observable<PhotosResult> getObserverable(Integer perPage, Integer page) {
-        return flickrApiService.getSharkList(
-                "flickr.photos.search",
-                "949e98778755d1982f537d56236bbb42",
-                "shark",
-                perPage,
-                page,
-                "url_t,url_c,url_l,url_o",
-                "json",
-                1)
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread());
-    }
-
     @Override
     public void loadInitial(@NonNull LoadInitialParams<Integer> params, @NonNull LoadInitialCallback<Photo> callback) {
         initialLoadingState.postValue(NetworkState.LOADING);
         networkState.postValue(NetworkState.LOADING);
-        disposable.add(getObserverable(params.requestedLoadSize, 1).subscribeWith(getLoadInitialObserver(callback)));
-    }
-
-    private DisposableObserver<PhotosResult> getLoadInitialObserver(@NonNull LoadInitialCallback<Photo> callback) {
-        return new DisposableObserver<PhotosResult>() {
-            @Override
-            public void onNext(PhotosResult photosResult) {
-                onLoadInitialFetched(photosResult, callback);
-            }
-
-            @Override
-            public void onError(Throwable e) {
-                onLoadInitialError(e);
-            }
-
-            @Override
-            public void onComplete() {
-                Timber.d("onLoadInitialComplete");
-            }
-        };
+        Disposable sharksDisposable = photosRepository.getSharkPhotos(params.requestedLoadSize, pageNumber)
+                .subscribe(sharks -> onLoadInitialFetched(sharks, callback), this::onLoadInitialError);
+        disposable.add(sharksDisposable);
     }
 
     private void onLoadInitialFetched(PhotosResult photosResult, LoadInitialCallback<Photo> callback) {
@@ -90,57 +59,39 @@ public class PhotosDataSource extends ItemKeyedDataSource<Integer, Photo> {
         networkState.postValue(NetworkState.LOADED);
         pageNumber++;
         callback.onResult(photosResult.getPhotos().getPhoto());
+        Timber.d("LoadInitialFetched");
     }
 
     private void onLoadInitialError(Throwable e) {
         Timber.e("onLoadInitialError: %s", e.getLocalizedMessage());
-        initialLoadingState.postValue(new NetworkState(NetworkState.Status.FAILED, e.getLocalizedMessage()));
-        networkState.postValue(new NetworkState(NetworkState.Status.FAILED, e.getLocalizedMessage()));
+        initialLoadingState.postValue(NetworkState.error(e.getLocalizedMessage()));
+        networkState.postValue(NetworkState.error(e.getLocalizedMessage()));
     }
 
     @Override
     public void loadAfter(@NonNull LoadParams<Integer> params, @NonNull LoadCallback<Photo> callback) {
+        loadAfterParams = params;
+        loadAfterCallback = callback;
         networkState.postValue(NetworkState.LOADING);
-        Timber.d("NextKey: %s", params.key);
-        Timber.d("RequestLoadSize: %s", params.requestedLoadSize);
-        disposable.add(getObserverable(params.requestedLoadSize, params.key).subscribeWith(getLoadAfterObserver(params, callback)));
+        Disposable sharksDisposable = photosRepository.getSharkPhotos(params.requestedLoadSize, params.key)
+                .subscribe(sharks -> onLoadAfterFetched(sharks, params, callback), this::onLoadAfterError);
+        disposable.add(sharksDisposable);
     }
-
-    private DisposableObserver<PhotosResult> getLoadAfterObserver(LoadParams<Integer> params, @NonNull LoadCallback<Photo> callback) {
-        return new DisposableObserver<PhotosResult>() {
-            @Override
-            public void onNext(PhotosResult photosResult) {
-                onLoadAfterFetched(photosResult, params, callback);
-            }
-
-            @Override
-            public void onError(Throwable e) {
-                onLoadAfterError(e);
-            }
-
-            @Override
-            public void onComplete() {
-                Timber.d("onLoadAfterCompleted");
-            }
-        };
-    }
-
 
     private void onLoadAfterFetched(PhotosResult photosResult, LoadParams<Integer> params, LoadCallback<Photo> callback) {
         networkState.postValue(NetworkState.LOADED);
         pageNumber++;
         callback.onResult(photosResult.getPhotos().getPhoto());
+        Timber.d("LoadAfterFetched");
     }
 
     private void onLoadAfterError(Throwable e) {
         Timber.e(e);
-        networkState.postValue(new NetworkState(NetworkState.Status.FAILED, e.getLocalizedMessage()));
+        networkState.postValue(NetworkState.error(e.getLocalizedMessage()));
     }
 
     @Override
-    public void loadBefore(@NonNull LoadParams<Integer> params, @NonNull LoadCallback<Photo> callback) {
-
-    }
+    public void loadBefore(@NonNull LoadParams<Integer> params, @NonNull LoadCallback<Photo> callback) { }
 
     @NonNull
     @Override
@@ -151,5 +102,18 @@ public class PhotosDataSource extends ItemKeyedDataSource<Integer, Photo> {
     public void clear() {
         pageNumber = 1;
         disposable.clear();
+    }
+
+    public void refresh() {
+        pageNumber = 1;
+        invalidate();
+    }
+
+    public void retry() {
+        if(loadAfterCallback != null) {
+            loadAfter(loadAfterParams, loadAfterCallback);
+        } else {
+            refresh();
+        }
     }
 }

@@ -10,16 +10,19 @@ This project requires AndroidX and a minimum API Level 17+.
 ## Features
 
 * Infinite Scrolling</p>
-![Alt Text](https://github.com/alexk229/SharkFeed/blob/master/gifs/infinite_scroll.gif)</p>
+<img src="https://github.com/alexk229/SharkFeed/blob/master/gifs/infinite_scroll.gif" width="300" height="500" /></p>
 
 * Pull to refresh</p>
-![Alt Text](https://github.com/alexk229/SharkFeed/blob/master/gifs/pull_refresh.gif)</p>
+<img src="https://github.com/alexk229/SharkFeed/blob/master/gifs/pull_refresh.gif" width="300" height="500" /></p>
 
 * Lightbox to view high quality image when tapping on a photo, saving to camera roll, and open in Flickr app</p>
-![Alt Text](https://github.com/alexk229/SharkFeed/blob/master/gifs/lightbox.gif)</p>
+<img src="https://github.com/alexk229/SharkFeed/blob/master/gifs/lightbox.gif" width="300" height="500" /></p>
 
 * Handling device rotation</p>
-![Alt Text](https://github.com/alexk229/SharkFeed/blob/master/gifs/rotation.gif)</p>
+<img src="https://github.com/alexk229/SharkFeed/blob/master/gifs/rotation.gif" width="300" height="500" /></p>
+
+* Handling Network Error</p>
+<img src="https://github.com/alexk229/SharkFeed/blob/master/gifs/network_error%20.gif" width="300" height="500" /></p>
 
 ## Built With
 

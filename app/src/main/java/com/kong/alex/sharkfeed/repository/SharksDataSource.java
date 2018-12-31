@@ -1,6 +1,6 @@
 package com.kong.alex.sharkfeed.repository;
 
-import com.kong.alex.sharkfeed.NetworkState;
+import com.kong.alex.sharkfeed.network.NetworkState;
 import com.kong.alex.sharkfeed.api.search.Photo;
 import com.kong.alex.sharkfeed.api.search.PhotosResult;
 

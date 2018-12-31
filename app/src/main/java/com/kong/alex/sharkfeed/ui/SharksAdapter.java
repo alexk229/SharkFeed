@@ -2,9 +2,8 @@ package com.kong.alex.sharkfeed.ui;
 
 import android.view.ViewGroup;
 
-import com.bumptech.glide.Glide;
 import com.kong.alex.sharkfeed.GlideRequests;
-import com.kong.alex.sharkfeed.NetworkState;
+import com.kong.alex.sharkfeed.network.NetworkState;
 import com.kong.alex.sharkfeed.R;
 import com.kong.alex.sharkfeed.api.search.Photo;
 

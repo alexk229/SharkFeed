@@ -33,7 +33,7 @@ public class SharkViewHolder extends RecyclerView.ViewHolder {
     }
 
     private void bindListeners() {
-        ivShark.setOnClickListener(v -> clickListener.onClick(v, photo));
+        ivShark.setOnClickListener(v -> clickListener.onClick(v, photo, this.getAdapterPosition()));
     }
 
     public void bindTo(Photo photo) {

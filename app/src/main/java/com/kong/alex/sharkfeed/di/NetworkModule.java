@@ -1,14 +1,8 @@
 package com.kong.alex.sharkfeed.di;
 
-import android.content.Context;
-
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.kong.alex.sharkfeed.Constants;
-import com.kong.alex.sharkfeed.api.FlickrApiService;
-
-import java.io.File;
 
 import javax.inject.Singleton;
 

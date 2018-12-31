@@ -14,9 +14,10 @@
         app:layout_constraintTop_toTopOf="parent" />
 
 
-    <include
+    <com.kong.alex.sharkfeed.ui.SharkContentLayout
         android:id="@+id/layout_expanded_image"
-        layout="@layout/view_expanded_image_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:visibility="invisible"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

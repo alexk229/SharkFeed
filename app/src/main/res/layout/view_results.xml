@@ -16,7 +16,6 @@
         android:id="@+id/store_house_ptr_image_content"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/colorAccent"
         android:clickable="true"
         android:padding="10dp">
 
@@ -30,7 +29,6 @@
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rv_sharks"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:scrollbars="vertical"/>
+        android:layout_height="match_parent" />
 
 </in.srain.cube.views.ptr.PtrFrameLayout>

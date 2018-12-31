@@ -1,42 +1,27 @@
 package com.kong.alex.sharkfeed.ui;
 
-import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
-import android.animation.AnimatorSet;
-import android.animation.ObjectAnimator;
+import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.Point;
-import android.graphics.Rect;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
+import android.content.pm.PackageManager;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.transition.TransitionManager;
+import android.os.Handler;
+import android.os.Parcelable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.DecelerateInterpolator;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.TextView;
+import android.view.ViewTreeObserver;
 import android.widget.Toast;
 
-import com.bumptech.glide.request.target.CustomViewTarget;
-import com.bumptech.glide.request.transition.Transition;
-import com.github.chrisbanes.photoview.PhotoView;
 import com.kong.alex.sharkfeed.GlideApp;
 import com.kong.alex.sharkfeed.GlideRequests;
 import com.kong.alex.sharkfeed.utils.ImageSaver;
-import com.kong.alex.sharkfeed.NetworkState;
-import com.kong.alex.sharkfeed.api.info.Owner;
-import com.kong.alex.sharkfeed.api.info.PhotoInfo;
-import com.kong.alex.sharkfeed.api.info.PhotoInfoResult;
+import com.kong.alex.sharkfeed.network.NetworkState;
 import com.kong.alex.sharkfeed.api.search.Photo;
 import com.kong.alex.sharkfeed.di.Injectable;
 import com.kong.alex.sharkfeed.R;
+import com.kong.alex.sharkfeed.utils.ZoomImageAnimator;
 
 import java.io.File;
 
@@ -44,7 +29,7 @@ import javax.inject.Inject;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.lifecycle.ViewModelProviders;
@@ -58,28 +43,18 @@ import in.srain.cube.views.ptr.PtrFrameLayout;
 import in.srain.cube.views.ptr.PtrHandler;
 import timber.log.Timber;
 
-public class MainFragment extends Fragment implements Injectable, RetryCallback, SharkClickListener, View.OnClickListener {
+import static com.kong.alex.sharkfeed.common.Constants.EXPANDED_IMAGE_VISIBILITY_STATE;
+import static com.kong.alex.sharkfeed.common.Constants.SHARK_RV_STATE;
+import static com.kong.alex.sharkfeed.common.Constants.THUMB_VIEW_STATE;
+
+public class MainFragment extends Fragment implements Injectable, RetryCallback, SharkClickListener {
 
     @BindView(R.id.rv_sharks)
     RecyclerView rvSharks;
     @BindView(R.id.swipe_refresh_sharks)
     PtrFrameLayout mPtrFrame;
-    @BindView(R.id.tv_shark_description)
-    TextView tvSharkDescription;
-    @BindView(R.id.tv_username)
-    TextView tvUsername;
-    @BindView(R.id.iv_close)
-    ImageView ivClose;
-    @BindView(R.id.pv_expanded_shark)
-    PhotoView pvExpandedShark;
     @BindView(R.id.layout_expanded_image)
-    ConstraintLayout layoutExpandedImage;
-    @BindView(R.id.layout_expanded_image_info)
-    ConstraintLayout layoutExpandedImageInfo;
-    @BindView(R.id.button_download)
-    LinearLayout buttonDownload;
-    @BindView(R.id.button_flickr)
-    LinearLayout buttonFlickr;
+    SharkContentLayout sharkContentLayout;
     @BindInt(android.R.integer.config_shortAnimTime)
     int mShortAnimationDuration;
 
@@ -93,10 +68,10 @@ public class MainFragment extends Fragment implements Injectable, RetryCallback,
     private SharkListViewModel sharkListViewModel;
 
     private View rootView;
+    private View currentSharkView;
+    private int currentSharkPosition;
     private GlideRequests glideRequest;
-    private Animator mCurrentAnimator;
-    private ImageSaver imageSaver;
-
+    private ZoomImageAnimator zoomImageAnimator;
 
     @Nullable
     @Override
@@ -119,6 +94,39 @@ public class MainFragment extends Fragment implements Injectable, RetryCallback,
         initAdapter();
         initSwipeRefresh();
         initZoomedImage();
+    }
+
+    @Override
+    public void onViewStateRestored(@Nullable Bundle savedInstanceState) {
+        super.onViewStateRestored(savedInstanceState);
+
+        if(savedInstanceState != null) {
+            restoreViewState(savedInstanceState);
+        }
+    }
+
+    private void restoreViewState(Bundle savedInstanceState) {
+        int expandedImageVisibility = savedInstanceState.getInt(EXPANDED_IMAGE_VISIBILITY_STATE);
+        currentSharkPosition = savedInstanceState.getInt(THUMB_VIEW_STATE);
+        Parcelable rvState = savedInstanceState.getParcelable(SHARK_RV_STATE);
+
+
+        sharkContentLayout.setVisibility(expandedImageVisibility);
+        new Handler().postDelayed(() -> rvSharks.getLayoutManager().onRestoreInstanceState(rvState), 300);
+
+        // Wait until the rv is populated
+        rvSharks.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                int width = rvSharks.getWidth();
+                int height = rvSharks.getHeight();
+                if (width > 0 && height > 0 && currentSharkView != null) {
+                    rvSharks.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                    zoomImageAnimator = new ZoomImageAnimator(currentSharkView, rootView, sharkContentLayout, mShortAnimationDuration);
+                }
+                currentSharkView = rvSharks.getLayoutManager().findViewByPosition(currentSharkPosition);
+            }
+        });
     }
 
     private void initAdapter() {
@@ -168,62 +176,16 @@ public class MainFragment extends Fragment implements Injectable, RetryCallback,
     }
 
     private void initZoomedImage() {
-        // Retrieve and cache the system's default "short" animation time.
-        pvExpandedShark.setOnViewTapListener((view, x, y) -> hideExpandedImageInfo());
-        layoutExpandedImageInfo.setOnClickListener(this);
-        buttonDownload.setOnClickListener(this);
-        buttonFlickr.setOnClickListener(this);
-        sharkListViewModel.getSharkInfoResponse().observe(this, this::setZoomedImageContent);
-        sharkListViewModel.getCurrentSelectedShark().observe(this, this::setZoomedImage);
+        sharkContentLayout.setCloseButtonListener(() -> zoomImageAnimator.collapseImageToThumb());
+        sharkContentLayout.setFlickrButtonListener(this::openFlickrApp);
+        sharkContentLayout.setDownloadButtonListener(this::downloadImage);
+        sharkListViewModel.getSharkInfoResponse().observe(this, sharkContentLayout::updateSharkInfo);
+        sharkListViewModel.getCurrentShark().observe(this, sharkContentLayout::updateSharkPhoto);
     }
 
-    private void hideExpandedImageInfo() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            TransitionManager.beginDelayedTransition(layoutExpandedImage);
-        }
-        boolean visible = layoutExpandedImageInfo.getVisibility() == View.VISIBLE;
-        if(visible) {
-            layoutExpandedImageInfo.setVisibility(View.GONE);
-        } else {
-            layoutExpandedImageInfo.setVisibility(View.VISIBLE);
-        }
-    }
-
-    private void setZoomedImageContent(@Nullable PhotoInfoResult photoInfoResult) {
-        Timber.d("PhotoInfoResult updated");
-        if(photoInfoResult == null) {
-            tvSharkDescription.setText("");
-            tvUsername.setText("");
-        } else {
-            PhotoInfo photoInfoInfo = photoInfoResult.getPhotoInfo();
-            Owner owner = photoInfoInfo.getOwner();
-            tvSharkDescription.setText(photoInfoInfo.getTitle().getContent());
-            tvUsername.setText(!owner.getRealname().isEmpty() ? owner.getRealname() : owner.getUsername());
-        }
-    }
-
-    private void setZoomedImage(Photo photo) {
-        String url = getSharkUrl(photo);
-        // Load the high-resolution "zoomed-in" image.
-        glideRequest
-                .asBitmap()
-                .load(url)
-                .into(new CustomViewTarget<PhotoView, Bitmap>(pvExpandedShark) {
-                    @Override
-                    public void onLoadFailed(@Nullable Drawable errorDrawable) { }
-
-                    @Override
-                    public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
-                        imageSaver = new ImageSaver(resource, photo.getId());
-                        pvExpandedShark.setImageDrawable(new BitmapDrawable(getResources(), resource));
-                    }
-
-                    @Override
-                    protected void onResourceCleared(@Nullable Drawable placeholder) {
-                        imageSaver = null;
-                        pvExpandedShark.setImageDrawable(placeholder);
-                    }
-                });
+    private void openFlickrApp(String url) {
+        Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+        startActivity(i);
     }
 
     private void setRefreshState(NetworkState networkState) {
@@ -233,36 +195,18 @@ public class MainFragment extends Fragment implements Injectable, RetryCallback,
         }
     }
 
-    @Override
-    public void retry() {
-        sharkListViewModel.retry();
-    }
-
-    @Override
-    public void onClick(View view, Photo photo) {
-        sharkListViewModel.getSharkInfoResponse(photo.getId());
-        sharkListViewModel.setCurrentSelectedShark(photo);
-        zoomImageFromThumb(view);
-    }
-
-    @Override
-    public void onClick(View v) {
-        switch (v.getId()) {
-            case R.id.button_download:
-                String savedImageLocation = imageSaver.saveImage();
-                Toast.makeText(context, "Saved: " + savedImageLocation, Toast.LENGTH_LONG).show();
-                addPicToGallery(savedImageLocation);
-                break;
-            case R.id.button_flickr:
-                break;
-            case R.id.layout_expanded_image_info:
-                hideExpandedImageInfo();
-                break;
-            case R.id.iv_close:
-                break;
+    private void downloadImage(ImageSaver imageSaver) {
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+            Toast.makeText(context, "Permission Denied", Toast.LENGTH_LONG).show();
+            return;
         }
+        String savedImageLocation = imageSaver.saveImage();
+        Toast.makeText(context, "Saved: " + savedImageLocation, Toast.LENGTH_LONG).show();
+        addPicToGallery(savedImageLocation);
     }
 
+    // Used to show image in gallery
     private void addPicToGallery(String imagePath) {
         Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
         File file = new File(imagePath);
@@ -271,149 +215,25 @@ public class MainFragment extends Fragment implements Injectable, RetryCallback,
         context.sendBroadcast(mediaScanIntent);
     }
 
-    private String getSharkUrl(Photo photo) {
-        if(photo.getHeightO() != null) {
-            return photo.getUrlO();
-        } else if(photo.getUrlL() != null) {
-            return photo.getUrlL();
-        } else if(photo.getUrlC() != null) {
-            return photo.getUrlC();
-        } else {
-            return photo.getUrlT();
-        }
+    @Override
+    public void retry() {
+        sharkListViewModel.retry();
     }
 
-    /**
-     * zoomImageFromThumb found in link below
-     * https://developer.android.com/training/animation/zoom
-     */
-    private void zoomImageFromThumb(final View thumbView) {
-        // If there's an animation in progress, cancel it
-        // immediately and proceed with this one.
-        if (mCurrentAnimator != null) {
-            mCurrentAnimator.cancel();
-        }
+    @Override
+    public void onClick(View view, Photo photo, int position) {
+        currentSharkPosition = position;
+        sharkListViewModel.setCurrentShark(photo);
+        sharkListViewModel.getSharkInfoResponse(photo.getId());
+        zoomImageAnimator = new ZoomImageAnimator(view, rootView, sharkContentLayout, mShortAnimationDuration);
+        zoomImageAnimator.zoomImageFromThumb();
+    }
 
-        // Calculate the starting and ending bounds for the zoomed-in image.
-        // This step involves lots of math. Yay, math.
-        final Rect startBounds = new Rect();
-        final Rect finalBounds = new Rect();
-        final Point globalOffset = new Point();
-
-        // The start bounds are the global visible rectangle of the thumbnail,
-        // and the final bounds are the global visible rectangle of the container
-        // view. Also set the container view's offset as the origin for the
-        // bounds, since that's the origin for the positioning animation
-        // properties (X, Y).
-        thumbView.getGlobalVisibleRect(startBounds);
-        rootView.getGlobalVisibleRect(finalBounds, globalOffset);
-        startBounds.offset(-globalOffset.x, -globalOffset.y);
-        finalBounds.offset(-globalOffset.x, -globalOffset.y);
-
-        // Adjust the start bounds to be the same aspect ratio as the final
-        // bounds using the "center crop" technique. This prevents undesirable
-        // stretching during the animation. Also calculate the start scaling
-        // factor (the end scaling factor is always 1.0).
-        float startScale;
-        if ((float) finalBounds.width() / finalBounds.height()
-                > (float) startBounds.width() / startBounds.height()) {
-            // Extend start bounds horizontally
-            startScale = (float) startBounds.height() / finalBounds.height();
-            float startWidth = startScale * finalBounds.width();
-            float deltaWidth = (startWidth - startBounds.width()) / 2;
-            startBounds.left -= deltaWidth;
-            startBounds.right += deltaWidth;
-        } else {
-            // Extend start bounds vertically
-            startScale = (float) startBounds.width() / finalBounds.width();
-            float startHeight = startScale * finalBounds.height();
-            float deltaHeight = (startHeight - startBounds.height()) / 2;
-            startBounds.top -= deltaHeight;
-            startBounds.bottom += deltaHeight;
-        }
-
-        // Hide the thumbnail and show the zoomed-in view. When the animation
-        // begins, it will position the zoomed-in view in the place of the
-        // thumbnail.
-        thumbView.setAlpha(0f);
-        layoutExpandedImage.setVisibility(View.VISIBLE);
-
-        // Set the pivot point for SCALE_X and SCALE_Y transformations
-        // to the top-left corner of the zoomed-in view (the default
-        // is the center of the view).
-        layoutExpandedImage.setPivotX(0f);
-        layoutExpandedImage.setPivotY(0f);
-
-        // Construct and run the parallel animation of the four translation and
-        // scale properties (X, Y, SCALE_X, and SCALE_Y).
-        AnimatorSet set = new AnimatorSet();
-        set
-                .play(ObjectAnimator.ofFloat(layoutExpandedImage, View.X,
-                        startBounds.left, finalBounds.left))
-                .with(ObjectAnimator.ofFloat(layoutExpandedImage, View.Y,
-                        startBounds.top, finalBounds.top))
-                .with(ObjectAnimator.ofFloat(layoutExpandedImage, View.SCALE_X,
-                        startScale, 1f))
-                .with(ObjectAnimator.ofFloat(layoutExpandedImage,
-                        View.SCALE_Y, startScale, 1f));
-        set.setDuration(mShortAnimationDuration);
-        set.setInterpolator(new DecelerateInterpolator());
-        set.addListener(new AnimatorListenerAdapter() {
-            @Override
-            public void onAnimationEnd(Animator animation) {
-                mCurrentAnimator = null;
-            }
-
-            @Override
-            public void onAnimationCancel(Animator animation) {
-                mCurrentAnimator = null;
-            }
-        });
-        set.start();
-        mCurrentAnimator = set;
-
-        // Upon clicking the zoomed-in image, it should zoom back down
-        // to the original bounds and show the thumbnail instead of
-        // the expanded image.
-        final float startScaleFinal = startScale;
-        ivClose.setOnClickListener(view -> {
-            if (mCurrentAnimator != null) {
-                mCurrentAnimator.cancel();
-            }
-
-            // Animate the four positioning/sizing properties in parallel,
-            // back to their original values.
-            AnimatorSet set1 = new AnimatorSet();
-            set1.play(ObjectAnimator
-                    .ofFloat(layoutExpandedImage, View.X, startBounds.left))
-                    .with(ObjectAnimator
-                            .ofFloat(layoutExpandedImage,
-                                    View.Y,startBounds.top))
-                    .with(ObjectAnimator
-                            .ofFloat(layoutExpandedImage,
-                                    View.SCALE_X, startScaleFinal))
-                    .with(ObjectAnimator
-                            .ofFloat(layoutExpandedImage,
-                                    View.SCALE_Y, startScaleFinal));
-            set1.setDuration(mShortAnimationDuration);
-            set1.setInterpolator(new DecelerateInterpolator());
-            set1.addListener(new AnimatorListenerAdapter() {
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    thumbView.setAlpha(1f);
-                    layoutExpandedImage.setVisibility(View.GONE);
-                    mCurrentAnimator = null;
-                }
-
-                @Override
-                public void onAnimationCancel(Animator animation) {
-                    thumbView.setAlpha(1f);
-                    layoutExpandedImage.setVisibility(View.GONE);
-                    mCurrentAnimator = null;
-                }
-            });
-            set1.start();
-            mCurrentAnimator = set1;
-        });
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putInt(EXPANDED_IMAGE_VISIBILITY_STATE, sharkContentLayout.getVisibility());
+        outState.putInt(THUMB_VIEW_STATE, currentSharkPosition);
+        outState.putParcelable(SHARK_RV_STATE, rvSharks.getLayoutManager().onSaveInstanceState());
     }
 }

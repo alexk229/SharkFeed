@@ -1,6 +1,6 @@
 package com.kong.alex.sharkfeed.ui;
 
-import com.kong.alex.sharkfeed.NetworkState;
+import com.kong.alex.sharkfeed.network.NetworkState;
 import com.kong.alex.sharkfeed.api.info.PhotoInfoResult;
 import com.kong.alex.sharkfeed.api.search.Photo;
 import com.kong.alex.sharkfeed.repository.SharksDataSource;
@@ -25,7 +25,7 @@ public class SharkListViewModel extends ViewModel {
     private final SharksRepository sharksRepository;
     private LiveData<PagedList<Photo>> sharkList;
     private MutableLiveData<PhotoInfoResult> sharkInfo;
-    private MutableLiveData<Photo> currentSelectedShark;
+    private MutableLiveData<Photo> currentShark;
     private final CompositeDisposable disposable;
 
     @Inject
@@ -33,7 +33,7 @@ public class SharkListViewModel extends ViewModel {
         this.sharksRepository = sharksRepository;
         this.disposable = disposable;
         sharkInfo = new MutableLiveData<>();
-        currentSelectedShark = new MutableLiveData<>();
+        currentShark = new MutableLiveData<>();
         sharksDataSourceFactory = new SharksDataSourceFactory(sharksRepository, disposable);
         createPagedList();
     }
@@ -64,12 +64,12 @@ public class SharkListViewModel extends ViewModel {
         return sharkList;
     }
 
-    public MutableLiveData<Photo> getCurrentSelectedShark() {
-        return currentSelectedShark;
+    public MutableLiveData<Photo> getCurrentShark() {
+        return currentShark;
     }
 
-    public void setCurrentSelectedShark(Photo photo) {
-        currentSelectedShark.postValue(photo);
+    public void setCurrentShark(Photo photo) {
+        currentShark.postValue(photo);
     }
 
     public void getSharkInfoResponse(String sharkId) {

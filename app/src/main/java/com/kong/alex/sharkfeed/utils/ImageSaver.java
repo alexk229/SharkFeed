@@ -7,6 +7,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 
+import timber.log.Timber;
+
 public class ImageSaver {
 
     private final Bitmap image;
@@ -35,6 +37,7 @@ public class ImageSaver {
                 image.compress(Bitmap.CompressFormat.JPEG, 100, fOut);
                 fOut.close();
             } catch (Exception e) {
+                Timber.e(e);
                 e.printStackTrace();
             }
         }

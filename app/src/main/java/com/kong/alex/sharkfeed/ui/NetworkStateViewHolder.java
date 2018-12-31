@@ -6,7 +6,7 @@ import android.view.ViewGroup;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import com.kong.alex.sharkfeed.NetworkState;
+import com.kong.alex.sharkfeed.network.NetworkState;
 import com.kong.alex.sharkfeed.R;
 
 import androidx.annotation.NonNull;

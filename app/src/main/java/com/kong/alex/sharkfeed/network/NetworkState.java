@@ -1,4 +1,4 @@
-package com.kong.alex.sharkfeed;
+package com.kong.alex.sharkfeed.network;
 
 public class NetworkState {
 

@@ -2,9 +2,11 @@ package com.kong.alex.sharkfeed.ui;
 
 import android.view.ViewGroup;
 
+import com.bumptech.glide.Glide;
+import com.kong.alex.sharkfeed.GlideRequests;
 import com.kong.alex.sharkfeed.NetworkState;
 import com.kong.alex.sharkfeed.R;
-import com.kong.alex.sharkfeed.api.Photo;
+import com.kong.alex.sharkfeed.api.search.Photo;
 
 import androidx.annotation.NonNull;
 import androidx.paging.PagedListAdapter;
@@ -16,6 +18,8 @@ public class SharksAdapter extends PagedListAdapter<Photo, RecyclerView.ViewHold
 
     private NetworkState currentNetworkState;
     private final RetryCallback callback;
+    private final SharkClickListener clickListener;
+    private final GlideRequests glideRequests;
 
     private static DiffUtil.ItemCallback<Photo> DIFF_CALLBACK =
             new DiffUtil.ItemCallback<Photo>() {
@@ -31,9 +35,11 @@ public class SharksAdapter extends PagedListAdapter<Photo, RecyclerView.ViewHold
                 }
             };
 
-    public SharksAdapter(RetryCallback callback) {
+    public SharksAdapter(RetryCallback callback, SharkClickListener clickListener, GlideRequests glideRequests) {
         super(DIFF_CALLBACK);
         this.callback = callback;
+        this.clickListener = clickListener;
+        this.glideRequests = glideRequests;
     }
 
     @NonNull
@@ -41,7 +47,7 @@ public class SharksAdapter extends PagedListAdapter<Photo, RecyclerView.ViewHold
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         switch (viewType) {
             case R.layout.item_shark:
-                return SharkViewHolder.create(parent);
+                return SharkViewHolder.create(parent, clickListener, glideRequests);
             case R.layout.item_network_state:
                 Timber.d("NetworkState created");
                 return NetworkStateViewHolder.create(parent, callback);

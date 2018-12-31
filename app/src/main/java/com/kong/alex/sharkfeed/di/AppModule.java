@@ -5,14 +5,14 @@ import android.content.Context;
 
 import com.kong.alex.sharkfeed.Constants;
 import com.kong.alex.sharkfeed.api.FlickrApiService;
-import com.kong.alex.sharkfeed.repository.PhotosDataSource;
-import com.kong.alex.sharkfeed.repository.PhotosDataSourceFactory;
+import com.kong.alex.sharkfeed.repository.SharksRepository;
 
 import javax.inject.Singleton;
 
 import dagger.Module;
 import dagger.Provides;
 import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.disposables.Disposable;
 import okhttp3.OkHttpClient;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
@@ -42,7 +42,20 @@ public class AppModule {
 
     @Provides
     @Singleton
+    SharksRepository providePhotosRepository(FlickrApiService flickrApiService) {
+        return new SharksRepository(flickrApiService);
+    }
+
+    @Provides
+    @Singleton
+    CompositeDisposable provideDisposable() {
+        return new CompositeDisposable();
+    }
+
+    @Provides
+    @Singleton
     Context provideApplication(Application application) {
         return application;
     }
+
 }

@@ -24,7 +24,7 @@ android {
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation 'androidx.constraintlayout:constraintlayout:2.0.0-alpha2'
+    implementation 'androidx.constraintlayout:constraintlayout:2.0.0-alpha3'
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test:runner:1.1.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.1.1'
@@ -74,6 +74,7 @@ dependencies {
     // optional - RxJava support
     implementation "androidx.paging:paging-rxjava2:$paging_version" // use -ktx for Kotlin
 
-
     implementation 'in.srain.cube:ultra-ptr:1.0.11'
+
+    implementation 'com.github.chrisbanes:PhotoView:2.3.0'
 }

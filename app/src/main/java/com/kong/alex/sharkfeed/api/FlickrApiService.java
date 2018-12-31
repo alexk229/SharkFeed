@@ -1,5 +1,9 @@
 package com.kong.alex.sharkfeed.api;
 
+import com.kong.alex.sharkfeed.api.info.PhotoInfoResult;
+import com.kong.alex.sharkfeed.api.search.PhotosResult;
+
+import io.reactivex.Flowable;
 import io.reactivex.Single;
 import retrofit2.http.GET;
 import retrofit2.http.Query;
@@ -17,12 +21,11 @@ public interface FlickrApiService {
             @Query("format") String format,
             @Query("nojsoncallback") Integer noJsonCallback);
 
-//    @GET("rest/")
-//    Call<PhotosResult> getSharkPhotos(
-//            @Query("method") String method,
-//            @Query("api_key") String api_key,
-//            @Query("text") String text,
-//            @Query("format") String format,
-//            @Query("nojsoncallback") Integer noJsonCallback,
-//            @Query("extras") String extras);
+    @GET("rest/")
+    Single<PhotoInfoResult> getSharkInfo(
+            @Query("method") String method,
+            @Query("api_key") String apiKey,
+            @Query("photo_id") String photoId,
+            @Query("format") String format,
+            @Query("nojsoncallback") Integer noJsonCallback);
 }

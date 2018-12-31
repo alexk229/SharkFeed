@@ -9,6 +9,7 @@ import javax.inject.Singleton;
 import dagger.BindsInstance;
 import dagger.Component;
 import dagger.android.AndroidInjectionModule;
+import io.reactivex.disposables.CompositeDisposable;
 
 @Singleton
 @Component(

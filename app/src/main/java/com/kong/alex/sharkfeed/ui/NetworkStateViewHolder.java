@@ -28,20 +28,15 @@ public class NetworkStateViewHolder extends RecyclerView.ViewHolder {
 
     private final RetryCallback callback;
 
-    public NetworkStateViewHolder(@NonNull View itemView, RetryCallback callback) {
+    private NetworkStateViewHolder(@NonNull View itemView, RetryCallback callback) {
         super(itemView);
         this.callback = callback;
         ButterKnife.bind(this, itemView);
         bindListeners();
     }
 
-    public void bindListeners() {
-        buttonRetry.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                callback.retry();
-            }
-        });
+    private void bindListeners() {
+        buttonRetry.setOnClickListener(v -> callback.retry());
     }
 
     public void bindTo(NetworkState networkState) {

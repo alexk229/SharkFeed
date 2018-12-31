@@ -1,4 +1,4 @@
-package com.kong.alex.sharkfeed.api;
+package com.kong.alex.sharkfeed.api.search;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;

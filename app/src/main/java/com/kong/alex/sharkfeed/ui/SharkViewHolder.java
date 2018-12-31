@@ -5,9 +5,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
-import com.bumptech.glide.Glide;
+import com.kong.alex.sharkfeed.GlideRequests;
 import com.kong.alex.sharkfeed.R;
-import com.kong.alex.sharkfeed.api.Photo;
+import com.kong.alex.sharkfeed.api.search.Photo;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -19,20 +19,33 @@ public class SharkViewHolder extends RecyclerView.ViewHolder {
     @BindView(R.id.iv_shark)
     ImageView ivShark;
 
-    SharkViewHolder(@NonNull View itemView) {
+    private Photo photo;
+
+    private final SharkClickListener clickListener;
+    private final GlideRequests glideRequests;
+
+    private SharkViewHolder(@NonNull View itemView, SharkClickListener clickListener, GlideRequests glideRequests) {
         super(itemView);
+        this.clickListener = clickListener;
+        this.glideRequests = glideRequests;
         ButterKnife.bind(this, itemView);
+        bindListeners();
+    }
+
+    private void bindListeners() {
+        ivShark.setOnClickListener(v -> clickListener.onClick(v, photo));
     }
 
     public void bindTo(Photo photo) {
-        Glide.with(itemView.getContext())
+        this.photo = photo;
+        glideRequests
                 .load(photo.getUrlT())
                 .into(ivShark);
     }
 
-    public static SharkViewHolder create(ViewGroup parent) {
+    public static SharkViewHolder create(ViewGroup parent, SharkClickListener clickListener, GlideRequests glideRequests) {
         LayoutInflater layoutInflater = LayoutInflater.from(parent.getContext());
         View view = layoutInflater.inflate(R.layout.item_shark, parent, false);
-        return new SharkViewHolder(view);
+        return new SharkViewHolder(view, clickListener, glideRequests);
     }
 }

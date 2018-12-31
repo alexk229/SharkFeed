@@ -1,26 +1,40 @@
 package com.kong.alex.sharkfeed.ui;
 
 import com.kong.alex.sharkfeed.NetworkState;
-import com.kong.alex.sharkfeed.api.Photo;
-import com.kong.alex.sharkfeed.repository.PhotosDataSource;
-import com.kong.alex.sharkfeed.repository.PhotosDataSourceFactory;
+import com.kong.alex.sharkfeed.api.info.PhotoInfoResult;
+import com.kong.alex.sharkfeed.api.search.Photo;
+import com.kong.alex.sharkfeed.repository.SharksDataSource;
+import com.kong.alex.sharkfeed.repository.SharksDataSourceFactory;
+import com.kong.alex.sharkfeed.repository.SharksRepository;
 
 import javax.inject.Inject;
 
 import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Transformations;
 import androidx.lifecycle.ViewModel;
 import androidx.paging.LivePagedListBuilder;
 import androidx.paging.PagedList;
+import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.disposables.Disposable;
+import timber.log.Timber;
 
 public class SharkListViewModel extends ViewModel {
 
-    private final PhotosDataSourceFactory photosDataSourceFactory;
+    private final SharksDataSourceFactory sharksDataSourceFactory;
+    private final SharksRepository sharksRepository;
     private LiveData<PagedList<Photo>> sharkList;
+    private MutableLiveData<PhotoInfoResult> sharkInfo;
+    private MutableLiveData<Photo> currentSelectedShark;
+    private final CompositeDisposable disposable;
 
     @Inject
-    public SharkListViewModel(PhotosDataSourceFactory photosDataSourceFactory) {
-        this.photosDataSourceFactory = photosDataSourceFactory;
+    public SharkListViewModel(SharksRepository sharksRepository, CompositeDisposable disposable) {
+        this.sharksRepository = sharksRepository;
+        this.disposable = disposable;
+        sharkInfo = new MutableLiveData<>();
+        currentSelectedShark = new MutableLiveData<>();
+        sharksDataSourceFactory = new SharksDataSourceFactory(sharksRepository, disposable);
         createPagedList();
     }
 
@@ -30,33 +44,56 @@ public class SharkListViewModel extends ViewModel {
                 .setInitialLoadSizeHint(200)
                 .setEnablePlaceholders(false)
                 .build();
-        sharkList = new LivePagedListBuilder<>(photosDataSourceFactory, config)
+        sharkList = new LivePagedListBuilder<>(sharksDataSourceFactory, config)
                 .build();
     }
 
     public LiveData<NetworkState> getNetworkState() {
-        return Transformations.switchMap(photosDataSourceFactory.getPhotosDataSource(), PhotosDataSource::getNetworkState);
+        return Transformations.switchMap(sharksDataSourceFactory.getSharksDataSource(), SharksDataSource::getNetworkState);
     }
 
     public LiveData<NetworkState> getRefreshState() {
-        return Transformations.switchMap(photosDataSourceFactory.getPhotosDataSource(), PhotosDataSource::getInitialLoadingState);
+        return Transformations.switchMap(sharksDataSourceFactory.getSharksDataSource(), SharksDataSource::getInitialLoadingState);
     }
 
-    public LiveData<PagedList<Photo>> getPhotosResponse() {
+    public MutableLiveData<PhotoInfoResult> getSharkInfoResponse() {
+        return sharkInfo;
+    }
+
+    public LiveData<PagedList<Photo>> getSharkPhotosResponse() {
         return sharkList;
     }
 
+    public MutableLiveData<Photo> getCurrentSelectedShark() {
+        return currentSelectedShark;
+    }
+
+    public void setCurrentSelectedShark(Photo photo) {
+        currentSelectedShark.postValue(photo);
+    }
+
+    public void getSharkInfoResponse(String sharkId) {
+        Disposable sharkInfoDisposable = sharksRepository.getSharkInfo(sharkId)
+                .subscribe(sharkInfo -> this.sharkInfo.postValue(sharkInfo),
+                        this::failedSharkInfoResponse);
+        disposable.add(sharkInfoDisposable);
+    }
+
+    private void failedSharkInfoResponse(Throwable e) {
+        Timber.d(e);
+    }
+
     public void refresh() {
-        photosDataSourceFactory.getPhotosDataSource().getValue().refresh();
+        sharksDataSourceFactory.getSharksDataSource().getValue().refresh();
     }
 
     public void retry() {
-        photosDataSourceFactory.getPhotosDataSource().getValue().retry();
+        sharksDataSourceFactory.getSharksDataSource().getValue().retry();
     }
 
     @Override
     protected void onCleared() {
         super.onCleared();
-        photosDataSourceFactory.getPhotosDataSource().getValue().clear();
+        sharksDataSourceFactory.getSharksDataSource().getValue().clear();
     }
 }

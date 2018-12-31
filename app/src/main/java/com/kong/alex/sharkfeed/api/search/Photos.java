@@ -1,4 +1,4 @@
-package com.kong.alex.sharkfeed.api;
+package com.kong.alex.sharkfeed.api.search;
 
 import java.util.List;
 import com.google.gson.annotations.Expose;

@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModelProvider;
 import dagger.Binds;
 import dagger.Module;
 import dagger.multibindings.IntoMap;
+import io.reactivex.disposables.CompositeDisposable;
 
 @Module
 public abstract class ViewModelModule {

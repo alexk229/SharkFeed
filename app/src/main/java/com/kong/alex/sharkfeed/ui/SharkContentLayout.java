@@ -36,7 +36,6 @@ import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.OnLifecycleEvent;
 import butterknife.BindView;
 import butterknife.ButterKnife;
-import timber.log.Timber;
 
 import static com.kong.alex.sharkfeed.common.Constants.SHARK_CONTENT_PARCELABLE;
 
@@ -103,7 +102,6 @@ public class SharkContentLayout extends LinearLayout implements View.OnClickList
     }
 
     public void updateSharkInfo(PhotoInfoResult photoInfoResult) {
-        Timber.d("PhotoInfoResult updated");
         if(photoInfoResult == null) {
             tvSharkDescription.setText("");
             tvUsername.setText("");

@@ -1,6 +1,7 @@
-package com.kong.alex.sharkfeed.repository;
+package com.kong.alex.sharkfeed.repository.paging;
 
 import com.kong.alex.sharkfeed.api.search.Photo;
+import com.kong.alex.sharkfeed.repository.SharksRepository;
 
 import javax.inject.Singleton;
 
@@ -8,7 +9,6 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.paging.DataSource;
 import io.reactivex.disposables.CompositeDisposable;
-import timber.log.Timber;
 
 @Singleton
 public class SharksDataSourceFactory extends DataSource.Factory<Integer, Photo> {

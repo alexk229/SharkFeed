@@ -1,8 +1,9 @@
-package com.kong.alex.sharkfeed.repository;
+package com.kong.alex.sharkfeed.repository.paging;
 
 import com.kong.alex.sharkfeed.network.NetworkState;
 import com.kong.alex.sharkfeed.api.search.Photo;
 import com.kong.alex.sharkfeed.api.search.PhotosResult;
+import com.kong.alex.sharkfeed.repository.SharksRepository;
 
 import javax.inject.Singleton;
 

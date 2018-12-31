@@ -3,8 +3,8 @@ package com.kong.alex.sharkfeed.ui;
 import com.kong.alex.sharkfeed.network.NetworkState;
 import com.kong.alex.sharkfeed.api.info.PhotoInfoResult;
 import com.kong.alex.sharkfeed.api.search.Photo;
-import com.kong.alex.sharkfeed.repository.SharksDataSource;
-import com.kong.alex.sharkfeed.repository.SharksDataSourceFactory;
+import com.kong.alex.sharkfeed.repository.paging.SharksDataSource;
+import com.kong.alex.sharkfeed.repository.paging.SharksDataSourceFactory;
 import com.kong.alex.sharkfeed.repository.SharksRepository;
 
 import javax.inject.Inject;
